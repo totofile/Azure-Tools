@@ -21,7 +21,7 @@ foreach ($module in $requiredModules) {
 
 ############  CONECT  #############
 # Se connecter à Azure AD avec un Tenant ID spécifique
-Connect-AzureAD -TenantId 
+Connect-AzureAD #-TenantId <TenantId> 
 
 
 #################### Files & Folders ######################
