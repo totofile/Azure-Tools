@@ -1,7 +1,7 @@
-Export Azure AD Application Secrets Expiry Script
+Export EntraID Application Secrets Expiry Script
 =================================================
 
-This PowerShell script automates the process of exporting Azure Active Directory (Azure AD) application secrets that are about to expire within a specified number of days. It helps in managing and auditing application credentials to ensure timely renewal and avoid service interruptions.
+This PowerShell script automates the process of exporting Entra ID (Azure AD) application secrets that are about to expire within a specified number of days. It helps in managing and auditing application credentials to ensure timely renewal and avoid service interruptions.
 
 Purpose
 -------
@@ -21,7 +21,7 @@ Configuration
 How to Use
 ----------
 
-1.  **Clone or download the repository** to your local machine.
+1.  **Clone or download files you need** to your local machine.
 2.  **Open PowerShell** and navigate to the directory containing the script.
 3.  **Run the script** by executing:
 
@@ -29,7 +29,7 @@ How to Use
 
     Copier le code
 
-    `./export-expiring-secrets.ps1 -days <number_of_days>`
+    `./AppSecretExpiracy.ps1 -days <number_of_days>`
 
     Replace `<number_of_days>` with the desired number of days to check for expiring secrets. The default is 30 days.
 4.  **Authenticate to Azure AD** when prompted. Optionally, provide your tenant ID if necessary.
@@ -38,7 +38,7 @@ How to Use
 Output
 ------
 
--   **CSV File**: The script creates a CSV file named `AZ_RBAC_Assignements_<timestamp>.csv` in the `CSV_SecretExpiration` directory. The CSV file includes the following columns:
+-   **CSV File**: The script creates a CSV file named `CSV_SecretExpiration<timestamp>.csv` in the `CSV_SecretExpiration` directory. The CSV file includes the following columns:
     -   `OwnerDisplayName`: The display name of the secret owner.
     -   `OwnerEmail`: The email of the secret owner.
     -   `ApplicationName`: The name of the application.
@@ -47,8 +47,3 @@ Output
     -   `SecretExpiryDate`: The expiry date of the secret.
     -   `DaysToExpiry`: The number of days until the secret expires.
 -   **Log File**: A log file detailing the script execution is generated in the `Logs` directory.
-
-Conclusion
-----------
-
-This script streamlines the process of identifying and managing expiring Azure AD application secrets, providing administrators with critical information to maintain security and operational integrity. By automating this task, administrators can proactively manage secret expirations and ensure continuous service availability.
