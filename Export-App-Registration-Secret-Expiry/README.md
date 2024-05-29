@@ -29,7 +29,7 @@ How to Use
 
     Copier le code
 
-    `./AppSecretExpiracy.ps1 -days <number_of_days>`
+    `./export-app-secret-expiry.ps1 -days <number_of_days>`
 
     Replace `<number_of_days>` with the desired number of days to check for expiring secrets. The default is 30 days.
 4.  **Authenticate to Azure AD** when prompted. Optionally, provide your tenant ID if necessary.
