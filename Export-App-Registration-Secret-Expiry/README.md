@@ -2,8 +2,6 @@ Export EntraID Application Registation Secrets Expiry Script
 =================================================
 
 This PowerShell script automates the process of exporting Entra ID (Azure AD) application secrets that are about to expire within a specified number of days.
-It checks for application secrets in Azure AD that will expire within a user-defined number of days.
-It helps avoiding service interruptions.
 
 Configuration
 -------------
