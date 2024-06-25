@@ -3,7 +3,7 @@
 This PowerShell script checks EntraID applications to identify secrets and certificates that are expiring within a certain number of days. The results are exported to a CSV file and optionally uploaded to Azure Blob Storage and File Storage.
 
 ## Prerequisites
-An app registred[https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app?tabs=certificate]
+An [app registred](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app?tabs=certificate)
 The app registration should have the following API permissions:
 - `Application.ReadWrite.All`
 - `Directory.Read.All`
