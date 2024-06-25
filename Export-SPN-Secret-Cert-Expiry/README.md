@@ -1,6 +1,6 @@
-# Azure AD Application Secret and Certificate Expiration Checker
+# EntraID Application Secret and Certificate Expiration Checker
 
-This PowerShell script checks Azure AD applications to identify secrets and certificates that are expiring within a certain number of days. The results are exported to a CSV file and optionally uploaded to Azure Blob Storage and File Storage.
+This PowerShell script checks EntraID applications to identify secrets and certificates that are expiring within a certain number of days. The results are exported to a CSV file and optionally uploaded to Azure Blob Storage and File Storage.
 
 ## Prerequisites
 
@@ -13,8 +13,8 @@ This PowerShell script checks Azure AD applications to identify secrets and cert
   - Az.Storage
   - Az.Accounts
 
-## Configuration
-
+## Authentiaction
+The script uses certificate-based authentication, but you can switch to another authentication method if needed.
 Ensure you have the following connection information:
 - `ClientId`
 - `TenantId`
@@ -28,8 +28,6 @@ The app registration used for this script should have the following API permissi
 - `Application.ReadWrite.All`
 - `Directory.Read.All`
 - `User.Read.All`
-
-Additionally, the script uses certificate-based authentication, but you can switch to another authentication method if needed.
 
 ### Azure Storage Requirements
 
@@ -65,7 +63,7 @@ The script will generate a CSV file with the expiration information for secrets 
 
 ### Optional: Upload to Azure Storage
 
-The function `Upload-ToAzureStorage` is included in the script to upload the generated CSV file to Azure Blob Storage and File Storage. This step is optional. If you do not wish to upload the file, you can comment out or remove the function call at the end of the script.
+The function `Upload-ToAzureStorage` is included in the script to upload the generated CSV file to Azure Blob Storage and File Storage. This step is optional. You can comment out or remove the function call at the end of the script.
 
 ### API Modules
 
