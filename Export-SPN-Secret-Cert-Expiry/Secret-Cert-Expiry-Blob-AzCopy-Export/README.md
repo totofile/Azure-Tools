@@ -1,5 +1,6 @@
 PowerShell Script for Exporting and Uploading Application Secrets to Azure Blob Storage
 =======================================================================================
+Inspired from an existing microsoft script [Export app registrations with expiring secrets and certificates](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/scripts/powershell-export-apps-with-expiring-secrets)
 
 Description
 -----------
