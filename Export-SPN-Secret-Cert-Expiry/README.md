@@ -1,37 +1,19 @@
-# EntraID Application Secret and Certificate Expiration Checker
+# Export EntraID Application Secret and Certificate Expiration 
 
 This PowerShell script checks EntraID applications to identify secrets and certificates that are expiring within a certain number of days. The results are exported to a CSV file and optionally uploaded to Azure Blob Storage and File Storage.
 
 ## Prerequisites
-
-## Permissions
-
-The app registration used for this script should have the following API permissions:
+An app registred[https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app?tabs=certificate]
+The app registration should have the following API permissions:
 - `Application.ReadWrite.All`
 - `Directory.Read.All`
 - `User.Read.All`
-  
-##API Modules
-Ensure the Az modules are installed for Azure Storage functionalities:
 
--   Az.Storage
--   Az.Accounts
+## API Modules
+-   **Module Installation**: The script automatically installs required PowerShell modules (`Az.Storage`, `Az.Accounts`, `Microsoft.Graph.Authentication`, `Microsoft.Graph.Users`, `Microsoft.Graph.Applications`, `Microsoft.Graph.DirectoryObjects`) if they are not already installed.
 
-Microsoft Graph API modules are used for querying Azure AD:
-
--   Microsoft.Graph.Authentication
--   Microsoft.Graph.Applications
--   Microsoft.Graph.DirectoryObjects
--   Microsoft.Graph.Users
-
-## Authentiaction
+### Authentiaction
 The script uses certificate-based authentication, but you can switch to another authentication method if needed.
-Ensure you have the following connection information:
-- `ClientId`
-- `TenantId`
-- `Thumbprint` of the certificate
-
-These should be set in relevant variables within the script.
 
 ### Azure Storage Requirements
 
