@@ -4,14 +4,25 @@ This PowerShell script checks EntraID applications to identify secrets and certi
 
 ## Prerequisites
 
-- PowerShell installed on your machine.
-- The following PowerShell modules:
-  - Microsoft.Graph.Authentication
-  - Microsoft.Graph.Applications
-  - Microsoft.Graph.DirectoryObjects
-  - Microsoft.Graph.Users
-  - Az.Storage
-  - Az.Accounts
+## Permissions
+
+The app registration used for this script should have the following API permissions:
+- `Application.ReadWrite.All`
+- `Directory.Read.All`
+- `User.Read.All`
+  
+##API Modules
+Ensure the Az modules are installed for Azure Storage functionalities:
+
+-   Az.Storage
+-   Az.Accounts
+
+Microsoft Graph API modules are used for querying Azure AD:
+
+-   Microsoft.Graph.Authentication
+-   Microsoft.Graph.Applications
+-   Microsoft.Graph.DirectoryObjects
+-   Microsoft.Graph.Users
 
 ## Authentiaction
 The script uses certificate-based authentication, but you can switch to another authentication method if needed.
@@ -21,13 +32,6 @@ Ensure you have the following connection information:
 - `Thumbprint` of the certificate
 
 These should be set in relevant variables within the script.
-
-### Permissions
-
-The app registration used for this script should have the following API permissions:
-- `Application.ReadWrite.All`
-- `Directory.Read.All`
-- `User.Read.All`
 
 ### Azure Storage Requirements
 
@@ -64,20 +68,6 @@ The script will generate a CSV file with the expiration information for secrets 
 ### Optional: Upload to Azure Storage
 
 The function `Upload-ToAzureStorage` is included in the script to upload the generated CSV file to Azure Blob Storage and File Storage. This step is optional. You can comment out or remove the function call at the end of the script.
-
-### API Modules
-
-Ensure the Az modules are installed for Azure Storage functionalities:
-
--   Az.Storage
--   Az.Accounts
-
-Microsoft Graph API modules are used for querying Azure AD:
-
--   Microsoft.Graph.Authentication
--   Microsoft.Graph.Applications
--   Microsoft.Graph.DirectoryObjects
--   Microsoft.Graph.Users
 
 Example Output
 --------------
