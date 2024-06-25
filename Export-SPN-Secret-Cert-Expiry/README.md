@@ -9,7 +9,7 @@ The app registration should have the following API permissions:
 - `Directory.Read.All`
 - `User.Read.All`
 
-## API Modules
+### API Modules
 -   **Module Installation**: The script automatically installs required PowerShell modules (`Az.Storage`, `Az.Accounts`, `Microsoft.Graph.Authentication`, `Microsoft.Graph.Users`, `Microsoft.Graph.Applications`, `Microsoft.Graph.DirectoryObjects`) if they are not already installed.
 
 ### Authentiaction
