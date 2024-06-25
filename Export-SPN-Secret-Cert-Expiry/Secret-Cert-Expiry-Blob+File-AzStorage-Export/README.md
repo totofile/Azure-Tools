@@ -16,6 +16,10 @@ The app registration should have the following API permissions:
 ### Authentiaction
 The script uses certificate-based authentication, but you can switch to another authentication method if needed.
 
+### Optional: Upload to Azure Storage
+
+The function `Upload-ToAzureStorage` is included in the script to upload the generated CSV file to Azure Blob Storage and File Storage. This step is optional. You can comment out or remove the function call at the end of the script.
+
 ### Azure Storage Requirements
 
 To upload files to Azure Storage, you need:
@@ -47,10 +51,6 @@ Ensure that your Azure storage account and other configurations are correctly se
     -   Whether you want to include applications with already expired secrets.
 
 The script will generate a CSV file with the expiration information for secrets and certificates.
-
-### Optional: Upload to Azure Storage
-
-The function `Upload-ToAzureStorage` is included in the script to upload the generated CSV file to Azure Blob Storage and File Storage. This step is optional. You can comment out or remove the function call at the end of the script.
 
 Example Output
 --------------
