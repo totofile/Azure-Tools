@@ -1,6 +1,7 @@
 # Export EntraID Application Secret and Certificate Expiration 
 
 This PowerShell script checks EntraID applications to identify secrets and certificates that are expiring within a certain number of days. The results are exported to a CSV file and optionally uploaded to Azure Blob Storage and File Storage.
+Inspired from an existing microsoft script [Export app registrations with expiring secrets and certificates](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/scripts/powershell-export-apps-with-expiring-secrets)
 
 ## Prerequisites
 An [app registred](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app?tabs=certificate)
