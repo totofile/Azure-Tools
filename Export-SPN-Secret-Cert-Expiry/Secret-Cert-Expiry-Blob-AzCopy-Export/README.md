@@ -31,6 +31,8 @@ This script requires the following PowerShell modules:
 
 -   `Microsoft.Graph.Authentication`
 -   `Microsoft.Graph.Applications`
+-   `Microsoft.Graph.DirectoryObjects`
+-   `Microsoft.Graph.Users`
 
 These modules will be automatically installed by the script if they are not already present.
 
