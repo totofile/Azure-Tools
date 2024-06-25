@@ -1,4 +1,4 @@
-Export Azure RBAC Roles Script
+Export All Azure RBAC Roles Script
 ==============================
 
 This PowerShell script automates the process of exporting Role-Based Access Control (RBAC) roles from an Azure tenant and saves the information in an Excel file.

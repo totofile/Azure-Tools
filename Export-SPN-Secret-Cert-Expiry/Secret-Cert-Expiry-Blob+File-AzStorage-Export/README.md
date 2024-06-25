@@ -1,35 +1,20 @@
-# Azure AD Application Secret and Certificate Expiration Checker
+# Export EntraID Application Secret and Certificate Expiration 
 
-This PowerShell script checks Azure AD applications to identify secrets and certificates that are expiring within a certain number of days. The results are exported to a CSV file and optionally uploaded to Azure Blob Storage and File Storage.
+This PowerShell script checks EntraID applications to identify secrets and certificates that are expiring within a certain number of days. The results are exported to a CSV file and optionally uploaded to Azure Blob Storage and File Storage.
+Inspired from an existing microsoft script [Export app registrations with expiring secrets and certificates](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/scripts/powershell-export-apps-with-expiring-secrets)
 
 ## Prerequisites
-
-- PowerShell installed on your machine.
-- The following PowerShell modules:
-  - Microsoft.Graph.Authentication
-  - Microsoft.Graph.Applications
-  - Microsoft.Graph.DirectoryObjects
-  - Microsoft.Graph.Users
-  - Az.Storage
-  - Az.Accounts
-
-## Configuration
-
-Ensure you have the following connection information:
-- `ClientId`
-- `TenantId`
-- `Thumbprint` of the certificate
-
-These should be set in relevant variables within the script.
-
-### Permissions
-
-The app registration used for this script should have the following API permissions:
+An [app registred](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app?tabs=certificate)
+The app registration should have the following API permissions:
 - `Application.ReadWrite.All`
 - `Directory.Read.All`
 - `User.Read.All`
 
-Additionally, the script uses certificate-based authentication, but you can switch to another authentication method if needed.
+### API Modules
+-   **Module Installation**: The script automatically installs required PowerShell modules (`Az.Storage`, `Az.Accounts`, `Microsoft.Graph.Authentication`, `Microsoft.Graph.Users`, `Microsoft.Graph.Applications`, `Microsoft.Graph.DirectoryObjects`) if they are not already installed.
+
+### Authentiaction
+The script uses certificate-based authentication, but you can switch to another authentication method if needed.
 
 ### Azure Storage Requirements
 
@@ -65,21 +50,7 @@ The script will generate a CSV file with the expiration information for secrets 
 
 ### Optional: Upload to Azure Storage
 
-The function `Upload-ToAzureStorage` is included in the script to upload the generated CSV file to Azure Blob Storage and File Storage. This step is optional. If you do not wish to upload the file, you can comment out or remove the function call at the end of the script.
-
-### API Modules
-
-Ensure the Az modules are installed for Azure Storage functionalities:
-
--   Az.Storage
--   Az.Accounts
-
-Microsoft Graph API modules are used for querying Azure AD:
-
--   Microsoft.Graph.Authentication
--   Microsoft.Graph.Applications
--   Microsoft.Graph.DirectoryObjects
--   Microsoft.Graph.Users
+The function `Upload-ToAzureStorage` is included in the script to upload the generated CSV file to Azure Blob Storage and File Storage. This step is optional. You can comment out or remove the function call at the end of the script.
 
 Example Output
 --------------
