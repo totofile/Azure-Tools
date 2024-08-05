@@ -1,6 +1,4 @@
 // Description: This file contains the configuration for the Azure AD login.
-import { useState } from 'react';
-const [isAuth, setIsAuth] = useState(false);
 const LoginConfig = {
 
   clientId: 'f9e82653-339f-4a2f-a011-02ec5cfebb4f',

@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from 'react';
-import LoginConfig from './auth';
 import { PublicClientApplication } from '@azure/msal-browser';
+import LoginConfig from './auth';
 
-
-const Header: React.FC = () => {
+const Corps: React.FC = () => {
     const [isAuth, setIsAuth] = useState(false);
 
   const publicClientAppRef = useRef<PublicClientApplication | null>(null);
@@ -42,14 +41,19 @@ const Header: React.FC = () => {
     }
   };
 
-  return (
-    <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
-      <h1 className="text-xl">My App Header</h1>
-        <button onClick={login} className="bg-white text-blue-600 p-2 rounded">
-            {isAuth ? "loged" : "login"}
-        </button>
-    </header>
-  );
+    return (
+        <div>
+            <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
+                <h1 className="text-xl">My App Header</h1>
+                <button onClick={login} className="bg-white text-blue-600 p-2 rounded">
+                    {isAuth ? "Logged In" : "Login"}
+                </button>
+            </header>
+            <div>
+                {isAuth ? <h1>User is authenticated</h1> : <h1>User is not authenticated</h1>}
+            </div>
+        </div>
+    );
 };
 
-export default Header;
+export default Corps;
