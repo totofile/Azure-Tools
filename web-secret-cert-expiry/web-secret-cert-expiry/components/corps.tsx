@@ -69,7 +69,15 @@ const Corps: React.FC = () => {
             const promises = applications.map(async (app) => {
             
             const secrets = await client.api(`/applications/${app.id}/passwordCredentials`).get();
-    
+            const certificateCredentials = await client.api(`/applications/${app.id}/keyCredentials`).get();
+            const certificateCredentialsWithDetails = await Promise.all(certificateCredentials.value.map(async (credential: any) => {
+                const credentialDetails = await client.api(`/applications/${app.id}/keyCredentials/`).get();
+                return {
+                ...credential,
+                displayName: credentialDetails.displayName,
+                endDateTime: credentialDetails.endDateTime,
+                };
+            }));
             const passwordCredentials = await client.api(`/applications/${app.id}/passwordCredentials`).get();
             const passwordCredentialsWithDetails = await Promise.all(passwordCredentials.value.map(async (credential: any) => {
                 const credentialDetails = await client.api(`/applications/${app.id}/passwordCredentials/`).get();
@@ -101,33 +109,65 @@ const Corps: React.FC = () => {
                     {isAuth ? "Logged In" : "Login"}
                 </button>
             </header>
-            <div className="text-lg mx-20" >
-                <h1 className="bg-cyan-500 text-white text-center rounded p-4 mx-auto mt-10 mb-10">Secrets / Certificats</h1>
+            <div className="text-lg mx-20 ">
+                <div className=" flex justify-between items-center bg-cyan-500 text-black text-center rounded p-4 mx-auto mt-10 mb-10" >
+                    <h1>Secrets / Certificats</h1>
+                    <select>
+                        <option value="secrets">Secrets</option>
+                        <option value="certificates">Certificates</option>
+                    </select>
+                <input type="number" placeholder="Days to expiry" />
+                </div>
                 {isAuth ? (
                     <div>
-                        <h1 className="bg-lime-900">User is authenticated</h1>
+                        <h1 className="bg-lime-200">User is authenticated</h1>
 
                         <h2>Secrets:</h2>
-                        <ul>
-                            {applications?.length > 0 ? (
-                                applications.map((app) => (
-                                    <li key={app.id}>
-                                        {app.displayName}
-                                        <ul>
-                                            {app.secrets?.length > 0 ? (
-                                                app.secrets.map((secret: any) => (
-                                                    <li key={secret.id}>{secret.displayName}</li>
-                                                ))
-                                            ) : (
-                                                <li>No secrets found</li>
-                                            )}
-                                        </ul>
-                                    </li>
-                                ))
-                            ) : (
-                                <li>No applications found</li>
-                            )}
-                        </ul>
+                        <table className="w-full border-collapse">
+                            <thead>
+                                <tr>
+                                    <th className="border border-blue-600 px-4 py-2">Application Name</th>
+                                    <th className="border border-blue-600 px-4 py-2">Secret Name</th>
+                                    <th className="border border-blue-600 px-4 py-2">Secret End Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {applications?.length > 0 ? (
+                                    applications.map((app) => (
+                                        <tr key={app.id}>
+                                            <td className="border border-blue-600 px-4 py-2">{app.displayName}</td>
+                                            <td className="border border-blue-600 px-4 py-2">
+                                                {app.secrets?.length > 0 ? (
+                                                    app.secrets.map((secret: any) => (
+                                                        <div key={secret.id}>
+                                                            <p>{secret.displayName}</p>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p>No secrets found</p>
+                                                )}
+                                            </td>
+                                            <td className="border border-blue-600 px-4 py-2">
+                                                {app.secrets?.length > 0 ? (
+                                                    app.secrets.map((secret: any) => (
+                                                        <div key={secret.id}>
+                                                            <p>{secret.endDateTime}</p>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p>No secrets found</p>
+                                                )}
+                                            </td>
+
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td className="border border-blue-600 px-4 py-2" colSpan={3}>No applications found</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 ) : (
                     <h1>User is not authenticated</h1>
@@ -136,5 +176,4 @@ const Corps: React.FC = () => {
         </div>
     );
 };
-
 export default Corps;
