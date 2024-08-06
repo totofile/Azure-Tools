@@ -58,11 +58,41 @@ const Corps: React.FC = () => {
         try {
             const response = await client.api('/applications').get();
             setApplications(response.value);
+            await fetchCertificatesAndSecrets(client, response.value); // Fetch certificates and secrets after fetching applications
         } catch (error) {
             console.error("Fetching applications failed", error);
         }
     };
 
+    const fetchCertificatesAndSecrets = async (client: Client, applications: any[]) => {
+        try {
+            const promises = applications.map(async (app) => {
+            
+            const secrets = await client.api(`/applications/${app.id}/passwordCredentials`).get();
+    
+            const passwordCredentials = await client.api(`/applications/${app.id}/passwordCredentials`).get();
+            const passwordCredentialsWithDetails = await Promise.all(passwordCredentials.value.map(async (credential: any) => {
+                const credentialDetails = await client.api(`/applications/${app.id}/passwordCredentials/`).get();
+                return {
+                ...credential,
+                displayName: credentialDetails.displayName,
+                endDateTime: credentialDetails.endDateTime,
+                };
+            }));
+    
+            return {
+                ...app,
+                secrets: secrets.value,
+                passwordCredentials: passwordCredentialsWithDetails,
+            };
+            });
+            const results = await Promise.all(promises);
+            setApplications(results);
+        } catch (error) {
+            console.error("Fetching certificates and secrets failed", error);
+        }
+    };
+    
     return (
         <div>
             <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
@@ -71,14 +101,29 @@ const Corps: React.FC = () => {
                     {isAuth ? "Logged In" : "Login"}
                 </button>
             </header>
-            <div>
+            <div className="text-lg mx-20" >
+                <h1 className="bg-cyan-500 text-white text-center rounded p-4 mx-auto mt-10 mb-10">Secrets / Certificats</h1>
                 {isAuth ? (
                     <div>
-                        <h1>User is authenticated</h1>
-                        <h2>Applications:</h2>
+                        <h1 className="bg-lime-900">User is authenticated</h1>
+
+                        <h2>Secrets:</h2>
                         <ul>
-                            {applications.length > 0 ? (
-                                applications.map((app) => <li key={app.id}>{app.displayName}</li>)
+                            {applications?.length > 0 ? (
+                                applications.map((app) => (
+                                    <li key={app.id}>
+                                        {app.displayName}
+                                        <ul>
+                                            {app.secrets?.length > 0 ? (
+                                                app.secrets.map((secret: any) => (
+                                                    <li key={secret.id}>{secret.displayName}</li>
+                                                ))
+                                            ) : (
+                                                <li>No secrets found</li>
+                                            )}
+                                        </ul>
+                                    </li>
+                                ))
                             ) : (
                                 <li>No applications found</li>
                             )}
