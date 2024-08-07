@@ -9,6 +9,7 @@ import LoginConfig from './auth';
 const Corps: React.FC = () => {
     const [isAuth, setIsAuth] = useState(false);
     const [applications, setApplications] = useState<any[]>([]);
+    const [selectedType, setSelectedType] = useState<string>('secrets');
     const publicClientAppRef = useRef<PublicClientApplication | null>(null);
 
     useEffect(() => {
@@ -46,61 +47,68 @@ const Corps: React.FC = () => {
 
     const fetchApplications = async () => {
         if (!publicClientAppRef.current) return;
-
+    
         const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(publicClientAppRef.current, {
             account: publicClientAppRef.current.getAllAccounts()[0],
             scopes: ["Directory.Read.All"],
             interactionType: InteractionType.Popup,
         });
-
+    
         const client = Client.initWithMiddleware({ authProvider });
-
+    
         try {
             const response = await client.api('/applications').get();
-            setApplications(response.value);
-            await fetchCertificatesAndSecrets(client, response.value); // Fetch certificates and secrets after fetching applications
+            const applications = response.value;
+    
+            // Fetch secrets and certificates in parallel
+            const [appsWithSecrets, appsWithCertificates] = await Promise.all([
+                fetchSecrets(client, applications),
+                fetchCertificates(client, applications)
+            ]);
+    
+            // Merge secrets and certificates into applications
+            const mergedApplications: any[] = applications.map((app: any) => {
+                const appWithSecrets = appsWithSecrets.find((a: any) => a.id === app.id) || {};
+                const appWithCertificates = appsWithCertificates.find((a: any) => a.id === app.id) || {};
+                return {
+                    ...app,
+                    secrets: appWithSecrets.secrets || [],
+                    certificates: appWithCertificates.certificates || []
+                };
+            });
+    
+            setApplications(mergedApplications);
         } catch (error) {
             console.error("Fetching applications failed", error);
         }
     };
 
-    const fetchCertificatesAndSecrets = async (client: Client, applications: any[]) => {
+    const fetchSecrets = async (client: Client, applications: any[]) => {
         try {
             const promises = applications.map(async (app) => {
-            
-            const secrets = await client.api(`/applications/${app.id}/passwordCredentials`).get();
-            const certificateCredentials = await client.api(`/applications/${app.id}/keyCredentials`).get();
-            const certificateCredentialsWithDetails = await Promise.all(certificateCredentials.value.map(async (credential: any) => {
-                const credentialDetails = await client.api(`/applications/${app.id}/keyCredentials/`).get();
-                return {
-                ...credential,
-                displayName: credentialDetails.displayName,
-                endDateTime: credentialDetails.endDateTime,
-                };
-            }));
-            const passwordCredentials = await client.api(`/applications/${app.id}/passwordCredentials`).get();
-            const passwordCredentialsWithDetails = await Promise.all(passwordCredentials.value.map(async (credential: any) => {
-                const credentialDetails = await client.api(`/applications/${app.id}/passwordCredentials/`).get();
-                return {
-                ...credential,
-                displayName: credentialDetails.displayName,
-                endDateTime: credentialDetails.endDateTime,
-                };
-            }));
-    
-            return {
-                ...app,
-                secrets: secrets.value,
-                passwordCredentials: passwordCredentialsWithDetails,
-            };
+                const secrets = await client.api(`/applications/${app.id}/passwordCredentials`).get();
+                return { ...app, secrets: secrets.value };
             });
-            const results = await Promise.all(promises);
-            setApplications(results);
+            return await Promise.all(promises);
         } catch (error) {
-            console.error("Fetching certificates and secrets failed", error);
+            console.error("Fetching secrets failed", error);
+            return [];
         }
     };
     
+    const fetchCertificates = async (client: Client, applications: any[]) => {
+        try {
+            const promises = applications.map(async (app) => {
+                const certificates = await client.api(`/applications/${app.id}/keyCredentials`).get();
+                return { ...app, certificates: certificates.value };
+            });
+            return await Promise.all(promises);
+        } catch (error) {
+            console.error("Fetching certificates failed", error);
+            return [];
+        }
+    };
+
     return (
         <div>
             <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
@@ -112,66 +120,80 @@ const Corps: React.FC = () => {
             <div className="text-lg mx-20 ">
                 <div className=" flex justify-between items-center bg-cyan-500 text-black text-center rounded p-4 mx-auto mt-10 mb-10" >
                     <h1>Secrets / Certificats</h1>
-                    <select>
+                    <button onClick={fetchApplications}>Fetch Applications</button>
+                    <select onChange={(e) => setSelectedType(e.target.value)} value={selectedType}>
                         <option value="secrets">Secrets</option>
                         <option value="certificates">Certificates</option>
                     </select>
-                <input type="number" placeholder="Days to expiry" />
                 </div>
-                {isAuth ? (
-                    <div>
-                        <h1 className="bg-lime-200">User is authenticated</h1>
-
-                        <h2>Secrets:</h2>
-                        <table className="w-full border-collapse">
+                <div>
+                    {applications.length > 0 ? (
+                        <table>
                             <thead>
                                 <tr>
-                                    <th className="border border-blue-600 px-4 py-2">Application Name</th>
-                                    <th className="border border-blue-600 px-4 py-2">Secret Name</th>
-                                    <th className="border border-blue-600 px-4 py-2">Secret End Date</th>
+                                    <th>Application Name</th>
+                                    <th>{selectedType === 'secrets' ? 'Secret Display Name' : 'Certificate Display Name'}</th>
+                                    <th>End Date</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {applications?.length > 0 ? (
-                                    applications.map((app) => (
-                                        <tr key={app.id}>
-                                            <td className="border border-blue-600 px-4 py-2">{app.displayName}</td>
-                                            <td className="border border-blue-600 px-4 py-2">
-                                                {app.secrets?.length > 0 ? (
+                                {applications.map((app) => (
+                                    <tr key={app.id}>
+                                        <td>{app.displayName}</td>
+                                        <td>
+                                            {selectedType === 'secrets' ? (
+                                                app.secrets && app.secrets.length > 0 ? (
                                                     app.secrets.map((secret: any) => (
-                                                        <div key={secret.id}>
+                                                        <div key={secret.keyId}>
                                                             <p>{secret.displayName}</p>
                                                         </div>
                                                     ))
                                                 ) : (
                                                     <p>No secrets found</p>
-                                                )}
-                                            </td>
-                                            <td className="border border-blue-600 px-4 py-2">
-                                                {app.secrets?.length > 0 ? (
+                                                )
+                                            ) : (
+                                                app.certificates && app.certificates.length > 0 ? (
+                                                    app.certificates.map((cert: any) => (
+                                                        <div key={cert.keyId}>
+                                                            <p>{cert.displayName}</p>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p>No certificates found</p>
+                                                )
+                                            )}
+                                        </td>
+                                        <td>
+                                            {selectedType === 'secrets' ? (
+                                                app.secrets && app.secrets.length > 0 ? (
                                                     app.secrets.map((secret: any) => (
-                                                        <div key={secret.id}>
+                                                        <div key={secret.keyId}>
                                                             <p>{secret.endDateTime}</p>
                                                         </div>
                                                     ))
                                                 ) : (
                                                     <p>No secrets found</p>
-                                                )}
-                                            </td>
-
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td className="border border-blue-600 px-4 py-2" colSpan={3}>No applications found</td>
+                                                )
+                                            ) : (
+                                                app.certificates && app.certificates.length > 0 ? (
+                                                    app.certificates.map((cert: any) => (
+                                                        <div key={cert.keyId}>
+                                                            <p>{cert.endDateTime}</p>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p>No certificates found</p>
+                                                )
+                                            )}
+                                        </td>
                                     </tr>
-                                )}
+                                ))}
                             </tbody>
                         </table>
-                    </div>
-                ) : (
-                    <h1>User is not authenticated</h1>
-                )}
+                    ) : (
+                        <h1>User is not authenticated</h1>
+                    )}
+                </div>
             </div>
         </div>
     );
