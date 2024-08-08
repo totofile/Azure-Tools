@@ -6,6 +6,12 @@ import { Client } from '@microsoft/microsoft-graph-client';
 import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
 import LoginConfig from './auth';
 
+// Function to format date
+const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+};
+
 const Corps: React.FC = () => {
     const [isAuth, setIsAuth] = useState(false);
     const [applications, setApplications] = useState<any[]>([]);
@@ -125,26 +131,27 @@ const Corps: React.FC = () => {
                         <option value="secrets">Secrets</option>
                         <option value="certificates">Certificates</option>
                     </select>
+                    <input type="number" placeholder='Days to expiry' />
                 </div>
                 <div>
                     {applications.length > 0 ? (
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Application Name</th>
-                                    <th>{selectedType === 'secrets' ? 'Secret Display Name' : 'Certificate Display Name'}</th>
-                                    <th>End Date</th>
+                        <table className="w-full text-xl text-left " >
+                            <thead className=' text-sm text-gray-700 uppercase'>
+                                <tr className="">
+                                    <th scope="col" className="border  border-gray-700 px-6 py-3 bg-gray-50 ">Application Name</th>
+                                    <th scope="col" className="border  border-gray-700 px-6 py-3 ">{selectedType === 'secrets' ? 'Secret Display Name' : 'Certificate Display Name'}</th>
+                                    <th scope="col" className="border border-gray-700 px-6 py-3 bg-gray-50">End Date</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {applications.map((app) => (
                                     <tr key={app.id}>
-                                        <td>{app.displayName}</td>
-                                        <td>
+                                        <td scope="col" className=" border border-gray-700 py-3 bg-gray-50 text-left  p-5 ">{app.displayName}</td>
+                                        <td className="border border-gray-700 p-5">
                                             {selectedType === 'secrets' ? (
                                                 app.secrets && app.secrets.length > 0 ? (
                                                     app.secrets.map((secret: any) => (
-                                                        <div key={secret.keyId}>
+                                                        <div className=" border-gray-700"key={secret.keyId}>
                                                             <p>{secret.displayName}</p>
                                                         </div>
                                                     ))
@@ -154,7 +161,7 @@ const Corps: React.FC = () => {
                                             ) : (
                                                 app.certificates && app.certificates.length > 0 ? (
                                                     app.certificates.map((cert: any) => (
-                                                        <div key={cert.keyId}>
+                                                        <div  className=" border-gray-700  " key={cert.keyId}>
                                                             <p>{cert.displayName}</p>
                                                         </div>
                                                     ))
@@ -163,12 +170,12 @@ const Corps: React.FC = () => {
                                                 )
                                             )}
                                         </td>
-                                        <td>
+                                        <td scope="col" className="border border-gray-700 py-3 bg-gray-50 p-5" >
                                             {selectedType === 'secrets' ? (
                                                 app.secrets && app.secrets.length > 0 ? (
                                                     app.secrets.map((secret: any) => (
-                                                        <div key={secret.keyId}>
-                                                            <p>{secret.endDateTime}</p>
+                                                        <div className=" border-gray-700" key={secret.keyId}>
+                                                            <p>{formatDate(secret.endDateTime)}</p>
                                                         </div>
                                                     ))
                                                 ) : (
@@ -178,7 +185,7 @@ const Corps: React.FC = () => {
                                                 app.certificates && app.certificates.length > 0 ? (
                                                     app.certificates.map((cert: any) => (
                                                         <div key={cert.keyId}>
-                                                            <p>{cert.endDateTime}</p>
+                                                            <p>{formatDate(cert.endDateTime)}</p>
                                                         </div>
                                                     ))
                                                 ) : (
