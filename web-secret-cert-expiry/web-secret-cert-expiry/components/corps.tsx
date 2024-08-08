@@ -11,11 +11,18 @@ const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
 };
-
+// Function to calculate days to expiry
+const calculateDaysToExpiry = (dateString: string) => {
+    const expiryDate = new Date(dateString);
+    const today = new Date();
+    const timeDiff = expiryDate.getTime() - today.getTime();
+    return Math.ceil(timeDiff / (1000 * 3600 * 24));
+};
 const Corps: React.FC = () => {
     const [isAuth, setIsAuth] = useState(false);
     const [applications, setApplications] = useState<any[]>([]);
     const [selectedType, setSelectedType] = useState<string>('secrets');
+    const [daysToExpiry, setDaysToExpiry] = useState<number>(0);
     const publicClientAppRef = useRef<PublicClientApplication | null>(null);
 
     useEffect(() => {
@@ -114,6 +121,15 @@ const Corps: React.FC = () => {
             return [];
         }
     };
+    const filteredApplications = applications.map(app => {
+        const filteredSecrets = app.secrets?.filter((secret: any) => calculateDaysToExpiry(secret.endDateTime) <= daysToExpiry) || [];
+        const filteredCertificates = app.certificates?.filter((cert: any) => calculateDaysToExpiry(cert.endDateTime) <= daysToExpiry) || [];
+        return {
+            ...app,
+            secrets: filteredSecrets,
+            certificates: filteredCertificates
+        };
+    });
 
     return (
         <div>
@@ -131,20 +147,21 @@ const Corps: React.FC = () => {
                         <option value="secrets">Secrets</option>
                         <option value="certificates">Certificates</option>
                     </select>
-                    <input type="number" placeholder='Days to expiry' />
-                </div>
+                    <input type="number" placeholder='Days to expiry' onChange={(e) => setDaysToExpiry(Number(e.target.value))} /></div>
                 <div>
-                    {applications.length > 0 ? (
+                    {filteredApplications.length > 0 ? (
                         <table className="w-full text-xl text-left " >
                             <thead className=' text-sm text-gray-700 uppercase'>
                                 <tr className="">
                                     <th scope="col" className="border  border-gray-700 px-6 py-3 bg-gray-50 ">Application Name</th>
                                     <th scope="col" className="border  border-gray-700 px-6 py-3 ">{selectedType === 'secrets' ? 'Secret Display Name' : 'Certificate Display Name'}</th>
                                     <th scope="col" className="border border-gray-700 px-6 py-3 bg-gray-50">End Date</th>
+                                    <th scope="col" className="border border-gray-700 px-6 py-3 bg-gray-50">Days To Expiry</th>
+
                                 </tr>
                             </thead>
                             <tbody>
-                                {applications.map((app) => (
+                                {filteredApplications.map((app) => (
                                     <tr key={app.id}>
                                         <td scope="col" className=" border border-gray-700 py-3 bg-gray-50 text-left  p-5 ">{app.displayName}</td>
                                         <td className="border border-gray-700 p-5">
@@ -186,6 +203,29 @@ const Corps: React.FC = () => {
                                                     app.certificates.map((cert: any) => (
                                                         <div key={cert.keyId}>
                                                             <p>{formatDate(cert.endDateTime)}</p>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p>No certificates found</p>
+                                                )
+                                            )}
+                                        </td>
+                                        <td scope="col" className="border border-gray-700 py-3 bg-gray-50 p-5" >
+                                            {selectedType === 'secrets' ? (
+                                                app.secrets && app.secrets.length > 0 ? (
+                                                    app.secrets.map((secret: any) => (
+                                                        <div className=" border-gray-700" key={secret.keyId}>
+                                                            <p>{calculateDaysToExpiry(secret.endDateTime)}</p>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p>No secrets found</p>
+                                                )
+                                            ) : (
+                                                app.certificates && app.certificates.length > 0 ? (
+                                                    app.certificates.map((cert: any) => (
+                                                        <div key={cert.keyId}>
+                                                            <p>{calculateDaysToExpiry(cert.endDateTime)}</p>
                                                         </div>
                                                     ))
                                                 ) : (
