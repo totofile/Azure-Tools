@@ -82,13 +82,23 @@ const Corps: React.FC = () => {
         }
     };
 
-    const filteredApplications = applications.filter(app => app.secrets?.length > 0 || app.certificates?.length > 0).map(app => {
+const filteredApplications = applications
+    .filter(app => {
+        if (selectedType === 'certificates') {
+            return app.certificates?.length > 0;
+        } else if (selectedType === 'secrets') {
+            return app.secrets?.length > 0;
+        } else if (selectedType === 'all') {
+            return app.certificates?.length > 0, app.secrets?.length > 0;
+        }
+        return false;
+    })
+    .map(app => {
         const filteredSecrets = app.secrets?.filter((secret: any) => calculateDaysToExpiry(secret.endDateTime) <= daysToExpiry) || [];
         const filteredCertificates = app.certificates?.filter((cert: any) => calculateDaysToExpiry(cert.endDateTime) <= daysToExpiry) || [];
 
         return { ...app, secrets: filteredSecrets, certificates: filteredCertificates };
     });
-
     return (
         <div>
             <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
