@@ -12,7 +12,7 @@ const Corps: React.FC = () => {
     const [isAuth, setIsAuth] = useState(false);
     const [applications, setApplications] = useState<any[]>([]);
     const [selectedType, setSelectedType] = useState<string>('all');
-    const [daysToExpiry, setDaysToExpiry] = useState<number>(5000);
+    const [daysToExpiry, setDaysToExpiry] = useState<number>(30);
     const publicClientAppRef = useRef<PublicClientApplication | null>(null);
 
     useEffect(() => {
@@ -82,23 +82,24 @@ const Corps: React.FC = () => {
         }
     };
 
-const filteredApplications = applications
-    .filter(app => {
-        if (selectedType === 'certificates') {
-            return app.certificates?.length > 0;
-        } else if (selectedType === 'secrets') {
-            return app.secrets?.length > 0;
-        } else if (selectedType === 'all') {
-            return app.certificates?.length > 0, app.secrets?.length > 0;
-        }
-        return false;
-    })
+    const filteredApplications = applications
     .map(app => {
         const filteredSecrets = app.secrets?.filter((secret: any) => calculateDaysToExpiry(secret.endDateTime) <= daysToExpiry) || [];
         const filteredCertificates = app.certificates?.filter((cert: any) => calculateDaysToExpiry(cert.endDateTime) <= daysToExpiry) || [];
 
         return { ...app, secrets: filteredSecrets, certificates: filteredCertificates };
+    })
+    .filter(app => {
+        if (selectedType === 'certificates') {
+            return app.certificates.length > 0;
+        } else if (selectedType === 'secrets') {
+            return app.secrets.length > 0;
+        } else if (selectedType === 'all') {
+            return app.secrets.length > 0 || app.certificates.length > 0;
+        }
+        return false;
     });
+
     return (
         <div>
             <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
@@ -110,13 +111,13 @@ const filteredApplications = applications
             <div className="text-lg mx-20">
                 <div className="flex justify-between items-center bg-cyan-500 text-black text-center rounded p-4 mx-auto mt-10 mb-10">
                     <h1>Secrets / Certificats</h1>
-                    <button onClick={handleFetchApplications}>Fetch Applications</button>
+                    <p>Fetch Applications</p>
                     <select onChange={(e) => setSelectedType(e.target.value)} value={selectedType}>
                         <option value="all">All</option>
                         <option value="secrets">Secrets</option>
                         <option value="certificates">Certificates</option>
                     </select>
-                    <input type="number" placeholder='Days to expiry : 30' onChange={(e) => setDaysToExpiry(Number(e.target.value))} />
+                    <input type="number" placeholder='Days to expiry : 30 ' onChange={(e) => setDaysToExpiry(Number(e.target.value))} />
                 </div>
                 <div>
                     {filteredApplications.length > 0 ? (
