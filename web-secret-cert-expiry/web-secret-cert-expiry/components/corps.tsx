@@ -7,6 +7,9 @@ import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-
 import LoginConfig from './auth';
 import { formatDate, calculateDaysToExpiry } from './dateUtils';
 import { fetchApplications, fetchSecrets, fetchCertificates } from './applicationService';
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
 
 const Corps: React.FC = () => {
     const [isAuth, setIsAuth] = useState(false);
@@ -100,6 +103,53 @@ const Corps: React.FC = () => {
         return false;
     });
 
+    const columnDefs = [
+        { headerName: "Application Name", field: "displayName", sortable: true, filter: 'agTextColumnFilter', flex: 1, resizable: true },
+        {
+            headerName: selectedType === 'all' ? 'Display Name' : selectedType === 'secrets' ? 'Secret Display Name' : 'Certificate Display Name',
+            field: selectedType === 'secrets' ? 'secrets[0].displayName' : 'certificates[0].displayName',
+            flex: 1,
+            resizable: true,
+            cellRenderer: (params: any) => {
+                if (selectedType === 'secrets' || selectedType === 'all') {
+                    return params.data.secrets.map((secret: any) => <div key={secret.keyId}>{secret.displayName}</div>);
+                } else if (selectedType === 'certificates' || selectedType === 'all') {
+                    return params.data.certificates.map((cert: any) => <div key={cert.keyId}>{cert.displayName}</div>);
+                }
+                return null;
+            }
+        },
+        {
+            headerName: "End Date",
+            field: selectedType === 'secrets' ? 'secrets[0].endDateTime' : 'certificates[0].endDateTime',
+            flex: 1,
+            resizable: true,
+            cellRenderer: (params: any) => {
+                if (selectedType === 'secrets' || selectedType === 'all') {
+                    return params.data.secrets.map((secret: any) => <div key={secret.keyId}>{formatDate(secret.endDateTime)}</div>);
+                } else if (selectedType === 'certificates' || selectedType === 'all') {
+                    return params.data.certificates.map((cert: any) => <div key={cert.keyId}>{formatDate(cert.endDateTime)}</div>);
+                }
+                return null;
+            }
+        },
+        {
+            headerName: "Days To Expiry",
+            field: selectedType === 'secrets' ? 'secrets[0].endDateTime' : 'certificates[0].endDateTime',
+            cellDataType: 'number',
+            flex: 1,
+            resizable: true,
+            cellRenderer: (params: any) => {
+                if (selectedType === 'secrets' || selectedType === 'all') {
+                    return params.data.secrets.map((secret: any) => <div key={secret.keyId}>{calculateDaysToExpiry(secret.endDateTime)}</div>);
+                } else if (selectedType === 'certificates' || selectedType === 'all') {
+                    return params.data.certificates.map((cert: any) => <div key={cert.keyId}>{calculateDaysToExpiry(cert.endDateTime)}</div>);
+                }
+                return null;
+            }
+        }
+    ];
+
     return (
         <div>
             <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
@@ -119,100 +169,14 @@ const Corps: React.FC = () => {
                     </select>
                     <input type="number" placeholder='Days to expiry : 30 ' onChange={(e) => setDaysToExpiry(Number(e.target.value))} />
                 </div>
-                <div>
-                    {filteredApplications.length > 0 ? (
-                        <table className="w-full text-xl text-left">
-                            <thead className='text-sm text-gray-700 uppercase'>
-                                <tr>
-                                    <th scope="col" className="border border-gray-700 px-6 py-3 bg-gray-50">Application Name</th>
-                                    <th scope="col" className="border border-gray-700 px-6 py-3">{selectedType === 'all' ? 'Display Name' : selectedType === 'secrets' ? 'Secret Display Name' : 'Certificate Display Name'}</th>
-                                    <th scope="col" className="border border-gray-700 px-6 py-3 bg-gray-50">End Date</th>
-                                    <th scope="col" className="border border-gray-700 px-6 py-3">Days To Expiry</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredApplications.map((app) => (
-                                    <tr key={app.id}>
-                                        <td scope="col" className="border border-gray-700 py-3 bg-gray-50 text-left p-5">{app.displayName}</td>
-                                        <td className="border border-gray-700 p-5">
-                                            {selectedType === 'secrets' || selectedType === 'all' ? (
-                                                app.secrets && app.secrets.length > 0 ? (
-                                                    app.secrets.map((secret: any) => (
-                                                        <div className="border-gray-700" key={secret.keyId}>
-                                                            <p>{secret.displayName}</p>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    null
-                                                )
-                                            ) : null}
-                                            {selectedType === 'certificates' || selectedType === 'all' ? (
-                                                app.certificates && app.certificates.length > 0 ? (
-                                                    app.certificates.map((cert: any) => (
-                                                        <div className="border-gray-700" key={cert.keyId}>
-                                                            <p>{cert.displayName}</p>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    null
-                                                )
-                                            ) : null}
-                                        </td>
-                                        <td scope="col" className="border border-gray-700 py-3 bg-gray-50 p-5">
-                                            {selectedType === 'secrets' || selectedType === 'all' ? (
-                                                app.secrets && app.secrets.length > 0 ? (
-                                                    app.secrets.map((secret: any) => (
-                                                        <div className="border-gray-700" key={secret.keyId}>
-                                                            <p>{formatDate(secret.endDateTime)}</p>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    null
-                                                )
-                                            ) : null}
-                                            {selectedType === 'certificates' || selectedType === 'all' ? (
-                                                app.certificates && app.certificates.length > 0 ? (
-                                                    app.certificates.map((cert: any) => (
-                                                        <div className="border-gray-700" key={cert.keyId}>
-                                                            <p>{formatDate(cert.endDateTime)}</p>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    null
-                                                )
-                                            ) : null}
-                                        </td>
-                                        <td scope="col" className="border border-gray-700 py-3 p-5">
-                                            {selectedType === 'secrets' || selectedType === 'all' ? (
-                                                app.secrets && app.secrets.length > 0 ? (
-                                                    app.secrets.map((secret: any) => (
-                                                        <div className="border-gray-700" key={secret.keyId}>
-                                                            <p>{calculateDaysToExpiry(secret.endDateTime)}</p>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    null
-                                                )
-                                            ) : null}
-                                            {selectedType === 'certificates' || selectedType === 'all' ? (
-                                                app.certificates && app.certificates.length > 0 ? (
-                                                    app.certificates.map((cert: any) => (
-                                                        <div className="border-gray-700" key={cert.keyId}>
-                                                            <p>{calculateDaysToExpiry(cert.endDateTime)}</p>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    null
-                                                )
-                                            ) : null}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    ) : (
-                        <h1>User is not authenticated</h1>
-                    )}
+                <div className="ag-theme-alpine" style={{ height: 400, width: '100%' }}>
+                    <AgGridReact
+                        rowData={filteredApplications}
+                        columnDefs={columnDefs}
+                        domLayout='autoHeight'
+                        pagination={true}
+                        paginationPageSize={10}
+                    />
                 </div>
             </div>
         </div>
