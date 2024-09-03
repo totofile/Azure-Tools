@@ -110,6 +110,16 @@ const Corps: React.FC = () => {
             field: selectedType === 'secrets' ? 'secrets[0].displayName' : 'certificates[0].displayName',
             flex: 1,
             resizable: true,
+            sortable: true,
+            filter: 'agTextColumnFilter',
+            valueGetter: (params: any) => {
+                if (selectedType === 'secrets' || selectedType === 'all') {
+                    return params.data.secrets.map((secret: any) => secret.displayName).join(', ');
+                } else if (selectedType === 'certificates' || selectedType === 'all') {
+                    return params.data.certificates.map((cert: any) => cert.displayName).join(', ');
+                }
+                return null;
+            },
             cellRenderer: (params: any) => {
                 if (selectedType === 'secrets' || selectedType === 'all') {
                     return params.data.secrets.map((secret: any) => <div key={secret.keyId}>{secret.displayName}</div>);
@@ -124,6 +134,24 @@ const Corps: React.FC = () => {
             field: selectedType === 'secrets' ? 'secrets[0].endDateTime' : 'certificates[0].endDateTime',
             flex: 1,
             resizable: true,
+            sortable: true,
+            filter: 'agDateColumnFilter',
+            valueGetter: (params: any) => {
+                if (selectedType === 'secrets' || selectedType === 'all') {
+                    return params.data.secrets.map((secret: any) => secret.endDateTime).join(', ');
+                } else if (selectedType === 'certificates' || selectedType === 'all') {
+                    return params.data.certificates.map((cert: any) => cert.endDateTime).join(', ');
+                }
+                return null;
+            },
+            valueFormatter: (params: any) => {
+                if (selectedType === 'secrets' || selectedType === 'all') {
+                    return params.data.secrets.map((secret: any) => formatDate(secret.endDateTime)).join(', ');
+                } else if (selectedType === 'certificates' || selectedType === 'all') {
+                    return params.data.certificates.map((cert: any) => formatDate(cert.endDateTime)).join(', ');
+                }
+                return null;
+            },
             cellRenderer: (params: any) => {
                 if (selectedType === 'secrets' || selectedType === 'all') {
                     return params.data.secrets.map((secret: any) => <div key={secret.keyId}>{formatDate(secret.endDateTime)}</div>);
@@ -139,6 +167,16 @@ const Corps: React.FC = () => {
             cellDataType: 'number',
             flex: 1,
             resizable: true,
+            sortable: true,
+            filter: 'agNumberColumnFilter',
+            valueGetter: (params: any) => {
+                if (selectedType === 'secrets' || selectedType === 'all') {
+                    return params.data.secrets.map((secret: any) => calculateDaysToExpiry(secret.endDateTime)).join(', ');
+                } else if (selectedType === 'certificates' || selectedType === 'all') {
+                    return params.data.certificates.map((cert: any) => calculateDaysToExpiry(cert.endDateTime)).join(', ');
+                }
+                return null;
+            },
             cellRenderer: (params: any) => {
                 if (selectedType === 'secrets' || selectedType === 'all') {
                     return params.data.secrets.map((secret: any) => <div key={secret.keyId}>{calculateDaysToExpiry(secret.endDateTime)}</div>);
@@ -160,14 +198,15 @@ const Corps: React.FC = () => {
             </header>
             <div className="text-lg mx-20">
                 <div className="flex justify-between items-center bg-cyan-500 text-black text-center rounded p-4 mx-auto mt-10 mb-10">
-                    <h1>Secrets / Certificats</h1>
-                    <p>Fetch Applications</p>
                     <select onChange={(e) => setSelectedType(e.target.value)} value={selectedType}>
                         <option value="all">All</option>
                         <option value="secrets">Secrets</option>
                         <option value="certificates">Certificates</option>
                     </select>
-                    <input type="number" placeholder='Days to expiry : 30 ' onChange={(e) => setDaysToExpiry(Number(e.target.value))} />
+                    <div className=' flex justify-between items-center '>
+                        <p className=' mr-5 '>Days to Expiry</p>
+                        <input className=' border rounded ' type="number" placeholder='Default : 30 ' onChange={(e) => setDaysToExpiry(Number(e.target.value))} />
+                    </div>
                 </div>
                 <div className="ag-theme-alpine" style={{ height: 400, width: '100%' }}>
                     <AgGridReact

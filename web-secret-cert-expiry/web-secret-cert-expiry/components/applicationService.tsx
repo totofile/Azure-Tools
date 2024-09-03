@@ -1,5 +1,6 @@
 import { Client } from '@microsoft/microsoft-graph-client';
 
+
 export const fetchApplications = async (client: Client) => {
     try {
         const response = await client.api('/applications').get();
