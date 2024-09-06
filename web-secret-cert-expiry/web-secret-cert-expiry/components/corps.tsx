@@ -13,7 +13,7 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 
 const Corps: React.FC = () => {
     const [isAuth, setIsAuth] = useState(false);
-    const [applications, setApplications] = useState<any[]>([]);
+    const [rowData, setRowData] = useState<any[]>([]);
     const [selectedType, setSelectedType] = useState<string>('all');
     const [daysToExpiry, setDaysToExpiry] = useState<number>(30);
     const publicClientAppRef = useRef<PublicClientApplication | null>(null);
@@ -45,13 +45,13 @@ const Corps: React.FC = () => {
             await publicClientAppRef.current?.loginPopup();
             console.log("Login successful");
             setIsAuth(true);
-            handleFetchApplications(); // Fetch applications after login
+            fetchData(); // Fetch data after login
         } catch (error) {
             console.error("Login failed", error);
         }
     };
 
-    const handleFetchApplications = async () => {
+    const fetchData = async () => {
         if (!publicClientAppRef.current) return;
 
         const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(publicClientAppRef.current, {
@@ -69,124 +69,108 @@ const Corps: React.FC = () => {
                 fetchCertificates(client, applications)
             ]);
 
-            const mergedApplications = applications.map((app: any) => {
-                const appWithSecrets = appsWithSecrets.find((a: any) => a.id === app.id) || {};
-                const appWithCertificates = appsWithCertificates.find((a: any) => a.id === app.id) || {};
-                return {
-                    ...app,
-                    secrets: appWithSecrets.secrets || [],
-                    certificates: appWithCertificates.certificates || []
-                };
-            });
-
-            setApplications(mergedApplications);
+            const flattenedData = flattenData(applications, appsWithSecrets, appsWithCertificates);
+            setRowData(flattenedData);
         } catch (error) {
-            console.error("Fetching applications failed", error);
+            console.error("Fetching data failed", error);
         }
     };
 
-    const filteredApplications = applications
-    .map(app => {
-        const filteredSecrets = app.secrets?.filter((secret: any) => calculateDaysToExpiry(secret.endDateTime) <= daysToExpiry) || [];
-        const filteredCertificates = app.certificates?.filter((cert: any) => calculateDaysToExpiry(cert.endDateTime) <= daysToExpiry) || [];
+    const flattenData = (applications: any[], appsWithSecrets: any[], appsWithCertificates: any[]) => {
+        const flattened: any[] = [];
+        applications.forEach(app => {
+            const appWithSecrets = appsWithSecrets.find(a => a.id === app.id) || { secrets: [] };
+            const appWithCertificates = appsWithCertificates.find(a => a.id === app.id) || { certificates: [] };
 
-        return { ...app, secrets: filteredSecrets, certificates: filteredCertificates };
-    })
-    .filter(app => {
-        if (selectedType === 'certificates') {
-            return app.certificates.length > 0;
-        } else if (selectedType === 'secrets') {
-            return app.secrets.length > 0;
-        } else if (selectedType === 'all') {
-            return app.secrets.length > 0 || app.certificates.length > 0;
-        }
-        return false;
-    });
+            if (selectedType === 'all' || selectedType === 'secrets') {
+                appWithSecrets.secrets.forEach((secret: any) => {
+                    if (calculateDaysToExpiry(secret.endDateTime) <= daysToExpiry) {
+                        flattened.push({
+                            applicationName: app.displayName,
+                            type: 'secret',
+                            displayName: secret.displayName,
+                            endDateTime: secret.endDateTime,
+                            daysToExpiry: calculateDaysToExpiry(secret.endDateTime)
+                        });
+                    }
+                });
+            }
 
-    const columnDefs = [
-        { headerName: "Application Name", field: "displayName", sortable: true, filter: 'agTextColumnFilter', flex: 1, resizable: true },
-        {
-            headerName: selectedType === 'all' ? 'Display Name' : selectedType === 'secrets' ? 'Secret Display Name' : 'Certificate Display Name',
-            field: selectedType === 'secrets' ? 'secrets[0].displayName' : 'certificates[0].displayName',
-            flex: 1,
-            resizable: true,
-            sortable: true,
-            filter: 'agTextColumnFilter',
-            valueGetter: (params: any) => {
-                if (selectedType === 'secrets' || selectedType === 'all') {
-                    return params.data.secrets.map((secret: any) => secret.displayName).join(', ');
-                } else if (selectedType === 'certificates' || selectedType === 'all') {
-                    return params.data.certificates.map((cert: any) => cert.displayName).join(', ');
-                }
-                return null;
-            },
-            cellRenderer: (params: any) => {
-                if (selectedType === 'secrets' || selectedType === 'all') {
-                    return params.data.secrets.map((secret: any) => <div key={secret.keyId}>{secret.displayName}</div>);
-                } else if (selectedType === 'certificates' || selectedType === 'all') {
-                    return params.data.certificates.map((cert: any) => <div key={cert.keyId}>{cert.displayName}</div>);
-                }
-                return null;
+            if (selectedType === 'all' || selectedType === 'certificates') {
+                appWithCertificates.certificates.forEach((cert: any) => {
+                    if (calculateDaysToExpiry(cert.endDateTime) <= daysToExpiry) {
+                        flattened.push({
+                            applicationName: app.displayName,
+                            type: 'certificate',
+                            displayName: cert.displayName,
+                            endDateTime: cert.endDateTime,
+                            daysToExpiry: calculateDaysToExpiry(cert.endDateTime)
+                        });
+                    }
+                });
             }
-        },
-        {
-            headerName: "End Date",
-            field: selectedType === 'secrets' ? 'secrets[0].endDateTime' : 'certificates[0].endDateTime',
-            flex: 1,
-            resizable: true,
-            sortable: true,
-            filter: 'agDateColumnFilter',
-            valueGetter: (params: any) => {
-                if (selectedType === 'secrets' || selectedType === 'all') {
-                    return params.data.secrets.map((secret: any) => secret.endDateTime).join(', ');
-                } else if (selectedType === 'certificates' || selectedType === 'all') {
-                    return params.data.certificates.map((cert: any) => cert.endDateTime).join(', ');
-                }
-                return null;
+        });
+        return flattened;
+    };
+
+    const getColumnDefs = (selectedType: string) => {
+        const commonColumns = [
+            {
+                headerName: "Application Name",
+                field: "applicationName",
+                sortable: true,
+                filter: 'agTextColumnFilter',
+                flex: 1,
+                resizable: true
             },
-            valueFormatter: (params: any) => {
-                if (selectedType === 'secrets' || selectedType === 'all') {
-                    return params.data.secrets.map((secret: any) => formatDate(secret.endDateTime)).join(', ');
-                } else if (selectedType === 'certificates' || selectedType === 'all') {
-                    return params.data.certificates.map((cert: any) => formatDate(cert.endDateTime)).join(', ');
-                }
-                return null;
+            {
+                headerName: "Display Name",
+                field: "displayName",
+                flex: 1,
+                resizable: true,
+                sortable: true,
+                filter: 'agTextColumnFilter'
             },
-            cellRenderer: (params: any) => {
-                if (selectedType === 'secrets' || selectedType === 'all') {
-                    return params.data.secrets.map((secret: any) => <div key={secret.keyId}>{formatDate(secret.endDateTime)}</div>);
-                } else if (selectedType === 'certificates' || selectedType === 'all') {
-                    return params.data.certificates.map((cert: any) => <div key={cert.keyId}>{formatDate(cert.endDateTime)}</div>);
-                }
-                return null;
+            {
+                headerName: "End Date",
+                field: "endDateTime",
+                sortable: true,
+                flex: 1,
+                resizable: true,
+                valueFormatter: (params: any) => formatDate(params.value)
+            },
+            {
+                headerName: "Days To Expiry",
+                field: "daysToExpiry",
+                cellDataType: 'number',
+                flex: 1,
+                resizable: true,
+                sortable: true,
+                filter: 'agNumberColumnFilter'
             }
-        },
-        {
-            headerName: "Days To Expiry",
-            field: selectedType === 'secrets' ? 'secrets[0].endDateTime' : 'certificates[0].endDateTime',
-            cellDataType: 'number',
-            flex: 1,
-            resizable: true,
-            sortable: true,
-            filter: 'agNumberColumnFilter',
-            valueGetter: (params: any) => {
-                if (selectedType === 'secrets' || selectedType === 'all') {
-                    return params.data.secrets.map((secret: any) => calculateDaysToExpiry(secret.endDateTime)).join(', ');
-                } else if (selectedType === 'certificates' || selectedType === 'all') {
-                    return params.data.certificates.map((cert: any) => calculateDaysToExpiry(cert.endDateTime)).join(', ');
-                }
-                return null;
-            },
-            cellRenderer: (params: any) => {
-                if (selectedType === 'secrets' || selectedType === 'all') {
-                    return params.data.secrets.map((secret: any) => <div key={secret.keyId}>{calculateDaysToExpiry(secret.endDateTime)}</div>);
-                } else if (selectedType === 'certificates' || selectedType === 'all') {
-                    return params.data.certificates.map((cert: any) => <div key={cert.keyId}>{calculateDaysToExpiry(cert.endDateTime)}</div>);
-                }
-                return null;
-            }
+        ];
+
+        if (selectedType === 'all') {
+            return [
+                ...commonColumns.slice(0, 1),
+                {
+                    headerName: "Type",
+                    field: "type",
+                    flex: 1,
+                    resizable: true,
+                    sortable: true,
+                    filter: 'agTextColumnFilter'
+                },
+                ...commonColumns.slice(1)
+            ];
         }
-    ];
+
+        return commonColumns;
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, [daysToExpiry, selectedType]);
 
     return (
         <div>
@@ -203,15 +187,15 @@ const Corps: React.FC = () => {
                         <option value="secrets">Secrets</option>
                         <option value="certificates">Certificates</option>
                     </select>
-                    <div className=' flex justify-between items-center '>
-                        <p className=' mr-5 '>Days to Expiry</p>
-                        <input className=' border rounded ' type="number" placeholder='Default : 30 ' onChange={(e) => setDaysToExpiry(Number(e.target.value))} />
+                    <div className='flex justify-between items-center'>
+                        <p className='mr-5'>Days to Expiry</p>
+                        <input className='border rounded' type="number" placeholder='Default: 30' onChange={(e) => setDaysToExpiry(Number(e.target.value))} />
                     </div>
                 </div>
                 <div className="ag-theme-alpine" style={{ height: 400, width: '100%' }}>
                     <AgGridReact
-                        rowData={filteredApplications}
-                        columnDefs={columnDefs}
+                        rowData={rowData}
+                        columnDefs={getColumnDefs(selectedType)}
                         domLayout='autoHeight'
                         pagination={true}
                         paginationPageSize={10}
