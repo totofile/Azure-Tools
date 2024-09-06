@@ -11,7 +11,7 @@ const Layout: React.FC<LayoutProps> = ({ children }: Readonly<{ children: React.
 return (
 <html lang="en">
 <Head>
-<title>My Web App</title>
+<title>Application Secret/Certificates Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 </Head>
 <body className="flex flex-col min-h-screen">
