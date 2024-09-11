@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useRef, useEffect, useState } from 'react';
 import { InteractionType, PublicClientApplication, AuthenticationResult } from '@azure/msal-browser';
 import { Client } from '@microsoft/microsoft-graph-client';
@@ -32,11 +31,17 @@ const Corps: React.FC = () => {
                     },
                 });
                 await publicClientAppRef.current.initialize();
+
+                const accounts = publicClientAppRef.current.getAllAccounts();
+                if (accounts.length > 0) {
+                    setIsAuth(true);
+                    fetchData();
+                }
             } catch (error) {
                 console.error("MSAL initialization failed", error);
             }
         };
-    
+
         initializeMsal();
     }, []);
 
@@ -149,7 +154,7 @@ const Corps: React.FC = () => {
         });
         return flattened;
     };
-    
+
     const getColumnDefs = () => {
         return [
             {
@@ -197,11 +202,13 @@ const Corps: React.FC = () => {
 
         ];
     };
-    
+
     useEffect(() => {
-        fetchData();
-    }, [daysToExpiry]);
-    
+        if (isAuth) {
+            fetchData();
+        }
+    }, [daysToExpiry, isAuth]);
+
     return (
         <div>
             <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
