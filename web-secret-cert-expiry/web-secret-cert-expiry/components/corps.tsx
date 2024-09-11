@@ -1,7 +1,6 @@
 "use client";
-
 import React, { useRef, useEffect, useState } from 'react';
-import { InteractionType, PublicClientApplication } from '@azure/msal-browser';
+import { InteractionType, PublicClientApplication, AuthenticationResult } from '@azure/msal-browser';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
 import LoginConfig from './auth';
@@ -32,11 +31,17 @@ const Corps: React.FC = () => {
                     },
                 });
                 await publicClientAppRef.current.initialize();
+
+                const accounts = publicClientAppRef.current.getAllAccounts();
+                if (accounts.length > 0) {
+                    setIsAuth(true);
+                    fetchData();
+                }
             } catch (error) {
                 console.error("MSAL initialization failed", error);
             }
         };
-    
+
         initializeMsal();
     }, []);
 
@@ -57,15 +62,27 @@ const Corps: React.FC = () => {
     const fetchData = async () => {
         if (!publicClientAppRef.current) return;
 
-        const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(publicClientAppRef.current, {
-            account: publicClientAppRef.current.getAllAccounts()[0],
-            scopes: ["Directory.Read.All"],
-            interactionType: InteractionType.Popup,
-        });
-
-        const client = Client.initWithMiddleware({ authProvider });
+        const account = publicClientAppRef.current.getAllAccounts()[0];
+        if (!account) {
+            console.error("No account found");
+            return;
+        }
 
         try {
+            const response: AuthenticationResult = await publicClientAppRef.current.acquireTokenSilent({
+                scopes: ["Directory.Read.All"],
+                account: account,
+            });
+
+            const accessToken = response.accessToken;
+            const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(publicClientAppRef.current, {
+                account: account,
+                scopes: ["Directory.Read.All"],
+                interactionType: InteractionType.Popup,
+            });
+
+            const client = Client.initWithMiddleware({ authProvider });
+
             const applications = await fetchApplications(client);
             const [appsWithSecrets, appsWithCertificates] = await Promise.all([
                 fetchSecrets(client, applications),
@@ -75,7 +92,33 @@ const Corps: React.FC = () => {
             const flattenedData = flattenData(applications, appsWithSecrets, appsWithCertificates);
             setRowData(flattenedData);
         } catch (error) {
-            console.error("Fetching data failed", error);
+            console.error("Token acquisition failed", error);
+            try {
+                const response: AuthenticationResult = await publicClientAppRef.current.acquireTokenPopup({
+                    scopes: ["Directory.Read.All"],
+                    account: account,
+                });
+
+                const accessToken = response.accessToken;
+                const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(publicClientAppRef.current, {
+                    account: account,
+                    scopes: ["Directory.Read.All"],
+                    interactionType: InteractionType.Popup,
+                });
+
+                const client = Client.initWithMiddleware({ authProvider });
+
+                const applications = await fetchApplications(client);
+                const [appsWithSecrets, appsWithCertificates] = await Promise.all([
+                    fetchSecrets(client, applications),
+                    fetchCertificates(client, applications)
+                ]);
+
+                const flattenedData = flattenData(applications, appsWithSecrets, appsWithCertificates);
+                setRowData(flattenedData);
+            } catch (error) {
+                console.error("Fetching data failed", error);
+            }
         }
     };
 
@@ -111,7 +154,7 @@ const Corps: React.FC = () => {
         });
         return flattened;
     };
-    
+
     const getColumnDefs = () => {
         return [
             {
@@ -159,11 +202,13 @@ const Corps: React.FC = () => {
 
         ];
     };
-    
+
     useEffect(() => {
-        fetchData();
-    }, [daysToExpiry]);
-    
+        if (isAuth) {
+            fetchData();
+        }
+    }, [daysToExpiry, isAuth]);
+
     return (
         <div>
             <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
