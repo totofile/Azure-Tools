@@ -44,7 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeMsal();
   }, []);
 
-  const login = async () => {
+    const login = async () => {
     try {
       await publicClientAppRef.current?.loginPopup({
         scopes: ["Directory.Read.All"],
@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("Login failed", error);
     }
   };
-
+  
   const logout = () => {
     publicClientAppRef.current?.logout();
     setIsAuth(false);

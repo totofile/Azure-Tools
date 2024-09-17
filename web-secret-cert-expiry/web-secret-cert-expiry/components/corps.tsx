@@ -1,6 +1,6 @@
 "use client";
 import React, { useRef, useEffect, useState } from 'react';
-import { useAuth } from './authContext';
+import { useRouter }from 'next/navigation';
 import { InteractionType, PublicClientApplication, AuthenticationResult } from '@azure/msal-browser';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
@@ -12,17 +12,11 @@ import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 
 const Corps: React.FC = () => {
-    //const { isAuth } = useAuth();
     const [isAuth, setIsAuth] = useState(false);
     const [rowData, setRowData] = useState<any[]>([]);
     const [daysToExpiry, setDaysToExpiry] = useState<number>(30);
     const publicClientAppRef = useRef<PublicClientApplication | null>(null);
-
-    // useEffect(() => {
-    //     if (isAuth) {
-    //       fetchData();
-    //     }
-    //   }, [isAuth]);
+    const router = useRouter();
 
     useEffect(() => {
         const initializeMsal = async () => {
@@ -66,10 +60,11 @@ const Corps: React.FC = () => {
             console.error("Login failed", error);
         }
     };
-    // const login = async () => {
-    //     if (isAuth) return; 
-    // }
+    
+
+
     const fetchData = async () => {
+
         if (!publicClientAppRef.current) return;
 
         const account = publicClientAppRef.current.getAllAccounts()[0];
@@ -212,27 +207,8 @@ const Corps: React.FC = () => {
 
         ];
     };
-
-    useEffect(() => {
-        if (isAuth) {
-            fetchData();
-        }
-    }, [daysToExpiry, isAuth]);
-
     return (
         <div>
-            <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
-                <h1 className="text-xl  mx-20 ">Azure Application Secret/Certificates Expiry Dashboard</h1>
-                {isAuth ? (
-                    <button onClick={login} className="bg-white text-blue-600 p-2 rounded">
-                        Logout
-                    </button>
-                ) : (
-                    <button onClick={login} className="bg-white text-blue-600 p-2 rounded">
-                        Login
-                    </button>
-                )}
-            </header>
             <div className="text-lg mx-20">
                 <div className="flex justify-between items-center bg-cyan-500 text-black text-center rounded p-4 mx-auto mt-10 mb-10">
                     <div className='flex justify-between items-center'>
