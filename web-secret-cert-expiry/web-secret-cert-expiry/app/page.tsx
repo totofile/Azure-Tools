@@ -1,14 +1,19 @@
-import React from 'react';
-import Corps from '../components/corps';
-import Footer from '../components/footer';
+'use client';
+import { useRouter } from 'next/navigation';
 
-const Home: React.FC = () => {
+export default function Page() {
+  const router = useRouter();
+  
+  const handleRedirect = () => {
+    router.push('/dashboard');
+  };
+
   return (
-    <>
-      <Corps />
-      <Footer />
-    </>
+    <div className="flex  justify-center min-h-screen">
+      <h1>Bienvenue, veuillez vous authentifier pour accéder aux informations</h1>
+      <button type="button" onClick={handleRedirect}>
+        Go to Dashboard
+      </button>
+    </div>
   );
-};
-
-export default Home;
+}

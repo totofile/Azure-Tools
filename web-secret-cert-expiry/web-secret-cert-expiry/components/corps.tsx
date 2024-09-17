@@ -212,7 +212,7 @@ const Corps: React.FC = () => {
     return (
         <div>
             <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
-                <h1 className="text-xl">Azure Application Secret/Certificates Expiry Dashboard</h1>
+                <h1 className="text-xl  mx-20 ">Azure Application Secret/Certificates Expiry Dashboard</h1>
                 <button onClick={login} className="bg-white text-blue-600 p-2 rounded">
                     {isAuth ? "Logged In" : "Login"}
                 </button>
