@@ -17,9 +17,6 @@ export default function Home() {
   return (
     <div className="flex items-start justify-center min-h-screen mt-10">
       <h1 className="text-2xl">Bienvenue, veuillez vous authentifier pour accéder aux informations</h1>
-      <button type="button" onClick={login} className="bg-white text-blue-600 p-2 rounded " >
-        Login
-      </button>
     </div>
   );
 }

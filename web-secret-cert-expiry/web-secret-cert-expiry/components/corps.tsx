@@ -1,67 +1,28 @@
 "use client";
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter }from 'next/navigation';
 import { InteractionType, PublicClientApplication, AuthenticationResult } from '@azure/msal-browser';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
-import LoginConfig from './auth';
 import { formatDate, calculateDaysToExpiry } from './dateUtils';
 import { fetchApplications, fetchSecrets, fetchCertificates } from './applicationService';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
+import { useAuth } from './authContext';
 
 const Corps: React.FC = () => {
-    const [isAuth, setIsAuth] = useState(false);
+    const { isAuth, publicClientAppRef } = useAuth();
     const [rowData, setRowData] = useState<any[]>([]);
     const [daysToExpiry, setDaysToExpiry] = useState<number>(30);
-    const publicClientAppRef = useRef<PublicClientApplication | null>(null);
-    const router = useRouter();
+    //const router = useRouter();
 
     useEffect(() => {
-        const initializeMsal = async () => {
-            try {
-                publicClientAppRef.current = new PublicClientApplication({
-                    auth: {
-                        clientId: LoginConfig.clientId,
-                        authority: LoginConfig.authority,
-                        redirectUri: LoginConfig.redirectUri,
-                    },
-                    cache: {
-                        cacheLocation: 'sessionStorage',
-                        storeAuthStateInCookie: true,
-                    },
-                });
-                await publicClientAppRef.current.initialize();
-
-                const accounts = publicClientAppRef.current.getAllAccounts();
-                if (accounts.length > 0) {
-                    setIsAuth(true);
-                    fetchData();
-                }
-            } catch (error) {
-                console.error("MSAL initialization failed", error);
-            }
-        };
-
-        initializeMsal();
-    }, []);
-
-    const login = async () => {
-        console.log("Login button clicked");
-        try {
-            await publicClientAppRef.current?.loginPopup({
-                scopes: ["Directory.Read.All"], // Vérifiez que ces scopes sont les plus restrictifs nécessaires
-            });
-            console.log("Login successful");
-            setIsAuth(true);
-            fetchData(); // Fetch data after login
-        } catch (error) {
-            console.error("Login failed", error);
-        }
-    };
-    
-
+        console.log("isAuth:", isAuth);
+        if (isAuth) {
+            fetchData();
+        } 
+    }, [isAuth]);
 
     const fetchData = async () => {
 

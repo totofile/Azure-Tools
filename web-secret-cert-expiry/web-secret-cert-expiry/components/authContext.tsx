@@ -1,6 +1,6 @@
 // components/authContext.tsx
 'use client';
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, MutableRefObject } from 'react';
 import { PublicClientApplication, AuthenticationResult } from '@azure/msal-browser';
 import LoginConfig from './auth';
 
@@ -8,6 +8,7 @@ interface AuthContextType {
   isAuth: boolean;
   login: () => Promise<void>;
   logout: () => void;
+  publicClientAppRef: MutableRefObject<PublicClientApplication | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,50 +19,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initializeMsal = async () => {
-      try {
-        publicClientAppRef.current = new PublicClientApplication({
-          auth: {
-            clientId: LoginConfig.clientId,
-            authority: LoginConfig.authority,
-            redirectUri: LoginConfig.redirectUri,
-          },
-          cache: {
-            cacheLocation: 'sessionStorage',
-            storeAuthStateInCookie: true,
-          },
-        });
-        await publicClientAppRef.current.initialize();
+        try {
+            publicClientAppRef.current = new PublicClientApplication({
+                auth: {
+                    clientId: LoginConfig.clientId,
+                    authority: LoginConfig.authority,
+                    redirectUri: LoginConfig.redirectUri,
+                },
+                cache: {
+                    cacheLocation: 'sessionStorage',
+                    storeAuthStateInCookie: true,
+                },
+            });
+            await publicClientAppRef.current.initialize();
 
-        const accounts = publicClientAppRef.current.getAllAccounts();
-        if (accounts.length > 0) {
-          setIsAuth(true);
+            const accounts = publicClientAppRef.current.getAllAccounts();
+            if (accounts.length > 0) {
+                setIsAuth(true);
+            }
+        } catch (error) {
+            console.error("MSAL initialization failed", error);
         }
-      } catch (error) {
-        console.error("MSAL initialization failed", error);
-      }
     };
 
     initializeMsal();
-  }, []);
+}, []);
 
-    const login = async () => {
+  const login = async () => {
+    if (!publicClientAppRef.current) return;
+
     try {
-      await publicClientAppRef.current?.loginPopup({
+      const response: AuthenticationResult = await publicClientAppRef.current.loginPopup({
         scopes: ["Directory.Read.All"],
       });
-      setIsAuth(true);
+
+      if (response.account) {
+        setIsAuth(true);
+      }
     } catch (error) {
       console.error("Login failed", error);
     }
   };
-  
+
   const logout = () => {
-    publicClientAppRef.current?.logout();
-    setIsAuth(false);
+    if (publicClientAppRef.current) {
+      publicClientAppRef.current.logout();
+      setIsAuth(false);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ isAuth, login, logout }}>
+    <AuthContext.Provider value={{ isAuth, login, logout, publicClientAppRef }}>
       {children}
     </AuthContext.Provider>
   );
@@ -70,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
