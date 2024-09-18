@@ -15,32 +15,29 @@ const Corps: React.FC = () => {
     const { isAuth, publicClientAppRef } = useAuth();
     const [rowData, setRowData] = useState<any[]>([]);
     const [daysToExpiry, setDaysToExpiry] = useState<number>(30);
-    //const router = useRouter();
+    const [loading, setLoading] = useState<boolean>(true);
+    const router = useRouter();
 
     useEffect(() => {
         console.log("isAuth:", isAuth);
         if (isAuth) {
             fetchData();
-        } 
+        } else {
+            setLoading(false);
+        }
     }, [isAuth]);
 
     const fetchData = async () => {
-
         if (!publicClientAppRef.current) return;
 
         const account = publicClientAppRef.current.getAllAccounts()[0];
         if (!account) {
             console.error("No account found");
+            setLoading(false);
             return;
         }
 
         try {
-            const response: AuthenticationResult = await publicClientAppRef.current.acquireTokenSilent({
-                scopes: ["Directory.Read.All"],
-                account: account,
-            });
-
-            const accessToken = response.accessToken;
             const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(publicClientAppRef.current, {
                 account: account,
                 scopes: ["Directory.Read.All"],
@@ -50,41 +47,24 @@ const Corps: React.FC = () => {
             const client = Client.initWithMiddleware({ authProvider });
 
             const applications = await fetchApplications(client);
+            console.log("Applications:", applications);
+
             const [appsWithSecrets, appsWithCertificates] = await Promise.all([
                 fetchSecrets(client, applications),
                 fetchCertificates(client, applications)
             ]);
 
+            console.log("Applications with Secrets:", appsWithSecrets);
+            console.log("Applications with Certificates:", appsWithCertificates);
+
             const flattenedData = flattenData(applications, appsWithSecrets, appsWithCertificates);
+            console.log("Flattened Data:", flattenedData);
+
             setRowData(flattenedData);
         } catch (error) {
-            console.error("Token acquisition failed", error);
-            try {
-                const response: AuthenticationResult = await publicClientAppRef.current.acquireTokenPopup({
-                    scopes: ["Directory.Read.All"],
-                    account: account,
-                });
-
-                const accessToken = response.accessToken;
-                const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(publicClientAppRef.current, {
-                    account: account,
-                    scopes: ["Directory.Read.All"],
-                    interactionType: InteractionType.Popup,
-                });
-
-                const client = Client.initWithMiddleware({ authProvider });
-
-                const applications = await fetchApplications(client);
-                const [appsWithSecrets, appsWithCertificates] = await Promise.all([
-                    fetchSecrets(client, applications),
-                    fetchCertificates(client, applications)
-                ]);
-
-                const flattenedData = flattenData(applications, appsWithSecrets, appsWithCertificates);
-                setRowData(flattenedData);
-            } catch (error) {
-                console.error("Fetching data failed", error);
-            }
+            console.error("Fetching data failed", error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -121,6 +101,14 @@ const Corps: React.FC = () => {
         return flattened;
     };
 
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    if (!isAuth) {
+        router.push('/');
+        return null;
+    }
     const getColumnDefs = () => {
         return [
             {

@@ -61,12 +61,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
-    if (publicClientAppRef.current) {
-      publicClientAppRef.current.logout();
-      setIsAuth(false);
-    }
-  };
+const logout = async () => {
+  if (publicClientAppRef.current) {
+    await publicClientAppRef.current.logoutPopup().catch(err => console.error("Logout failed", err));
+    setIsAuth(false);
+    publicClientAppRef.current = null; // Réinitialisez la référence de l'application cliente public
+  }
+};
 
   return (
     <AuthContext.Provider value={{ isAuth, login, logout, publicClientAppRef }}>

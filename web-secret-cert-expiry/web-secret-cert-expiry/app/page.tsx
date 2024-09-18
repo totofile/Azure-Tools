@@ -6,7 +6,7 @@ import { useAuth } from '../components/authContext';
 
 export default function Home() {
   const router = useRouter();
-  const { isAuth, login } = useAuth();
+  const { isAuth } = useAuth();
 
   useEffect(() => {
     if (isAuth) {
