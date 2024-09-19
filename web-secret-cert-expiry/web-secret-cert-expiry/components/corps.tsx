@@ -1,63 +1,31 @@
 "use client";
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter }from 'next/navigation';
 import { InteractionType, PublicClientApplication, AuthenticationResult } from '@azure/msal-browser';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
-import LoginConfig from './auth';
 import { formatDate, calculateDaysToExpiry } from './dateUtils';
 import { fetchApplications, fetchSecrets, fetchCertificates } from './applicationService';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
+import { useAuth } from './authContext';
 
 const Corps: React.FC = () => {
-    const [isAuth, setIsAuth] = useState(false);
+    const { isAuth, publicClientAppRef } = useAuth();
     const [rowData, setRowData] = useState<any[]>([]);
     const [daysToExpiry, setDaysToExpiry] = useState<number>(30);
-    const publicClientAppRef = useRef<PublicClientApplication | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const router = useRouter();
 
     useEffect(() => {
-        const initializeMsal = async () => {
-            try {
-                publicClientAppRef.current = new PublicClientApplication({
-                    auth: {
-                        clientId: LoginConfig.clientId,
-                        authority: LoginConfig.authority,
-                        redirectUri: LoginConfig.redirectUri,
-                    },
-                    cache: {
-                        cacheLocation: 'sessionStorage',
-                        storeAuthStateInCookie: true,
-                    },
-                });
-                await publicClientAppRef.current.initialize();
-
-                const accounts = publicClientAppRef.current.getAllAccounts();
-                if (accounts.length > 0) {
-                    setIsAuth(true);
-                    fetchData();
-                }
-            } catch (error) {
-                console.error("MSAL initialization failed", error);
-            }
-        };
-
-        initializeMsal();
-    }, []);
-
-    const login = async () => {
-        console.log("Login button clicked");
-        try {
-            await publicClientAppRef.current?.loginPopup({
-                scopes: ["Directory.Read.All"], // Vérifiez que ces scopes sont les plus restrictifs nécessaires
-            });
-            console.log("Login successful");
-            setIsAuth(true);
-            fetchData(); // Fetch data after login
-        } catch (error) {
-            console.error("Login failed", error);
+        console.log("isAuth:", isAuth);
+        if (isAuth) {
+            fetchData();
+        } else {
+            setLoading(false);
         }
-    };
+    }, [isAuth,daysToExpiry]);
 
     const fetchData = async () => {
         if (!publicClientAppRef.current) return;
@@ -65,16 +33,11 @@ const Corps: React.FC = () => {
         const account = publicClientAppRef.current.getAllAccounts()[0];
         if (!account) {
             console.error("No account found");
+            setLoading(false);
             return;
         }
 
         try {
-            const response: AuthenticationResult = await publicClientAppRef.current.acquireTokenSilent({
-                scopes: ["Directory.Read.All"],
-                account: account,
-            });
-
-            const accessToken = response.accessToken;
             const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(publicClientAppRef.current, {
                 account: account,
                 scopes: ["Directory.Read.All"],
@@ -84,41 +47,24 @@ const Corps: React.FC = () => {
             const client = Client.initWithMiddleware({ authProvider });
 
             const applications = await fetchApplications(client);
+            console.log("Applications:", applications);
+
             const [appsWithSecrets, appsWithCertificates] = await Promise.all([
                 fetchSecrets(client, applications),
                 fetchCertificates(client, applications)
             ]);
 
+            console.log("Applications with Secrets:", appsWithSecrets);
+            console.log("Applications with Certificates:", appsWithCertificates);
+
             const flattenedData = flattenData(applications, appsWithSecrets, appsWithCertificates);
+            console.log("Flattened Data:", flattenedData);
+
             setRowData(flattenedData);
         } catch (error) {
-            console.error("Token acquisition failed", error);
-            try {
-                const response: AuthenticationResult = await publicClientAppRef.current.acquireTokenPopup({
-                    scopes: ["Directory.Read.All"],
-                    account: account,
-                });
-
-                const accessToken = response.accessToken;
-                const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(publicClientAppRef.current, {
-                    account: account,
-                    scopes: ["Directory.Read.All"],
-                    interactionType: InteractionType.Popup,
-                });
-
-                const client = Client.initWithMiddleware({ authProvider });
-
-                const applications = await fetchApplications(client);
-                const [appsWithSecrets, appsWithCertificates] = await Promise.all([
-                    fetchSecrets(client, applications),
-                    fetchCertificates(client, applications)
-                ]);
-
-                const flattenedData = flattenData(applications, appsWithSecrets, appsWithCertificates);
-                setRowData(flattenedData);
-            } catch (error) {
-                console.error("Fetching data failed", error);
-            }
+            console.error("Fetching data failed", error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -155,6 +101,14 @@ const Corps: React.FC = () => {
         return flattened;
     };
 
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    if (!isAuth) {
+        router.push('/');
+        return null;
+    }
     const getColumnDefs = () => {
         return [
             {
@@ -203,20 +157,8 @@ const Corps: React.FC = () => {
         ];
     };
 
-    useEffect(() => {
-        if (isAuth) {
-            fetchData();
-        }
-    }, [daysToExpiry, isAuth]);
-
     return (
         <div>
-            <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
-                <h1 className="text-xl">Azure Application Secret/Certificates Expiry Dashboard</h1>
-                <button onClick={login} className="bg-white text-blue-600 p-2 rounded">
-                    {isAuth ? "Logged In" : "Login"}
-                </button>
-            </header>
             <div className="text-lg mx-20">
                 <div className="flex justify-between items-center bg-cyan-500 text-black text-center rounded p-4 mx-auto mt-10 mb-10">
                     <div className='flex justify-between items-center'>

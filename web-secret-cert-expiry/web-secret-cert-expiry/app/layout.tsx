@@ -1,24 +1,24 @@
+'use client';
 import './globals.css';
-import Head from 'next/head';
+import { AuthProvider } from '../components/authContext';
+import Header from '../components/header';
+import Footer from '../components/footer';
 
-
-
-interface LayoutProps {
-children: React.ReactNode;
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <AuthProvider>
+      <html lang="en">
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <body className="flex flex-col min-h-screen">
+            <Header />
+                <main>{children}</main>
+            <Footer />
+        </body>
+      </html>
+    </AuthProvider>
+  );
 }
-
-const Layout: React.FC<LayoutProps> = ({ children }: Readonly<{ children: React.ReactNode; }>) => {
-return (
-<html lang="en">
-<Head>
-<title>Application Secret/Certificates Dashboard</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-</Head>
-<body className="flex flex-col min-h-screen">
-{children}
-</body>
-</html>
-);
-};
-
-export default Layout;
