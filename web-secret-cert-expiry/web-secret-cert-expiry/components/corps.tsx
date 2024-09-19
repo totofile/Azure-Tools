@@ -25,7 +25,7 @@ const Corps: React.FC = () => {
         } else {
             setLoading(false);
         }
-    }, [isAuth]);
+    }, [isAuth,daysToExpiry]);
 
     const fetchData = async () => {
         if (!publicClientAppRef.current) return;
@@ -156,6 +156,7 @@ const Corps: React.FC = () => {
 
         ];
     };
+
     return (
         <div>
             <div className="text-lg mx-20">

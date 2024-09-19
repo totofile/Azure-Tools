@@ -45,27 +45,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeMsal();
 }, []);
 
-  const login = async () => {
-    if (!publicClientAppRef.current) return;
-
-    try {
-      const response: AuthenticationResult = await publicClientAppRef.current.loginPopup({
-        scopes: ["Directory.Read.All"],
+const login = async () => {
+  console.log("Login button clicked");
+  try {
+      await publicClientAppRef.current?.loginPopup({
+          scopes: ["Directory.Read.All"], // Vérifiez que ces scopes sont les plus restrictifs nécessaires
       });
-
-      if (response.account) {
-        setIsAuth(true);
-      }
-    } catch (error) {
+      console.log("Login successful");
+      setIsAuth(true);
+  } catch (error) {
       console.error("Login failed", error);
-    }
-  };
+  }
+};
 
 const logout = async () => {
   if (publicClientAppRef.current) {
     await publicClientAppRef.current.logoutPopup().catch(err => console.error("Logout failed", err));
     setIsAuth(false);
     publicClientAppRef.current = null; // Réinitialisez la référence de l'application cliente public
+    window.location.reload(); // Rechargez la page pour effacer les données de l'utilisateur
   }
 };
 
