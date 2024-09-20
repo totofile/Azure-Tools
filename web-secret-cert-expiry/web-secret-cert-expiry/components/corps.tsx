@@ -166,7 +166,7 @@ const Corps: React.FC = () => {
                         <input className='border rounded' type="number" placeholder='Default: 30' onChange={(e) => setDaysToExpiry(Number(e.target.value))} />
                     </div>
                 </div>
-                <div className="ag-theme-alpine" style={{ height: 400, width: '100%' }}>
+                <div className="ag-theme-alpine" style={{ height: '100%', width: '100%' }}>
                     <AgGridReact
                         rowData={rowData}
                         columnDefs={getColumnDefs()}
