@@ -21,7 +21,6 @@ This project contains a PowerShell script that allows you to send emails via Mic
 
 In your Automation Account, go to **Modules** and install the following modules:
 
-- Az.Accounts
 - Microsoft.Graph.Authentication
 - Microsoft.Graph.Users.Action
 
